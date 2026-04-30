@@ -1,0 +1,55 @@
+name: wordpress-demo
+services:
+  web:
+    image: wordpress
+    restart: unless-stopped
+    depends_on:
+      base:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: base
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/wordpress_db_password
+    secrets:
+      - wordpress_db_password
+    ports:
+      - "8080:80"
+    networks:
+      - wordpress-network
+  base:
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/wordpress_db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE: ${DB_NAME}
+    secrets:
+      - wordpress_db_password
+      - mysql_root_password
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -u root -p\"$$(cat
+            /run/secrets/mysql_root_password)\" --silent",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - wordpress-network
+volumes:
+  db_data:
+networks:
+  wordpress-network:
+    driver: bridge
+secrets:
+  wordpress_db_password:
+    file: ./secrets/wordpress_db_password.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
