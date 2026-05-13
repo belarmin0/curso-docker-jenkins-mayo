@@ -4,7 +4,6 @@ metadata:
   name: curso-contenedores
   labels:
     app: curso-contenedores
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -33,7 +32,7 @@ metadata:
   labels:
     app: curso-contenedores
 spec:
-  replicas: 10
+  replicas: 3
   selector:
     matchLabels:
       app: curso-contenedores
@@ -119,13 +118,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: curso-contenedores
+  namespace: curso-contenedores
   labels:
     app.kubernetes.io/name: curso-contenedores
     app: curso-contenedores
 spec:
   ingressClassName: nginx
   rules:
-  - host: contenedors.curso.cl
+  - host: app.local
     http:
       paths:
       - pathType: Prefix
@@ -133,7 +133,7 @@ spec:
         backend:
           service:
             name: curso-contenedores
-            port: 
+            port:
               number: 80
 ---
 apiVersion: apps/v1
