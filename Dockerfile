@@ -2,23 +2,27 @@ FROM node:24 AS construccion
 
 WORKDIR /usr/app
 
-COPY package*.json .
+RUN corepack enable
 
-RUN npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile
 
 COPY nest-cli.json tsconfig*.json ./
 COPY src ./src
 
-RUN npm run build
+RUN pnpm run build
 
 
 FROM node:24-alpine AS publicacion
 
 WORKDIR /usr/app
 
-COPY package*.json .
+RUN corepack enable
 
-RUN npm ci --omit=dev
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=construccion /usr/app/dist ./dist
 
