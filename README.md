@@ -9,19 +9,23 @@ El contexto actual de la aplicacion es:
 - configuracion por variables de entorno
 - activacion opcional del modulo de base de datos mediante `ENABLE_DB`
 - endpoints de health para liveness y readiness
+- un manifiesto Kubernetes de ejemplo en [`kubernetes.yaml`](kubernetes.yaml)
+- un ejemplo separado de WordPress con MySQL en [`compose-wordpress/`](compose-wordpress)
 
-El flujo principal de este repositorio hoy es levantar la aplicacion con `docker compose` usando el archivo [docker-compose.yaml](/home/cmd/tmp/curso-contenedores/curso-contenedores/docker-compose.yaml) y las variables de [.env.app](/home/cmd/tmp/curso-contenedores/curso-contenedores/.env.app).
+El flujo principal de este repositorio hoy es levantar la aplicacion con `docker compose` usando el archivo [`docker-compose.yaml`](docker-compose.yaml) y las variables de [`.env.app`](.env.app).
 
 ## Estructura principal
 
-- [src/main.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/main.ts): punto de entrada de NestJS
-- [src/app.module.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/app.module.ts): modulo principal
-- [src/config/app.config.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/config/app.config.ts): configuracion centralizada
-- [src/modules/calculo](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/modules/calculo): modulo de calculo
-- [src/modules/users-data](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/modules/users-data): modulo de usuarios y acceso a PostgreSQL
-- [Dockerfile](/home/cmd/tmp/curso-contenedores/curso-contenedores/Dockerfile): imagen multi-stage de la API
-- [docker-compose.yaml](/home/cmd/tmp/curso-contenedores/curso-contenedores/docker-compose.yaml): orquestacion de backend + base de datos
-- [.env.app](/home/cmd/tmp/curso-contenedores/curso-contenedores/.env.app): variables usadas por Compose
+- [`src/main.ts`](src/main.ts): punto de entrada de NestJS
+- [`src/app.module.ts`](src/app.module.ts): modulo principal
+- [`src/config/app.config.ts`](src/config/app.config.ts): configuracion centralizada
+- [`src/modules/calculo`](src/modules/calculo): modulo de calculo
+- [`src/modules/users-data`](src/modules/users-data): modulo de usuarios y acceso a PostgreSQL
+- [`Dockerfile`](Dockerfile): imagen multi-stage de la API
+- [`docker-compose.yaml`](docker-compose.yaml): orquestacion de backend + base de datos
+- [`.env.app`](.env.app): variables usadas por Compose
+- [`kubernetes.yaml`](kubernetes.yaml): manifiesto Kubernetes de ejemplo
+- [`compose-wordpress/docker-compose.yaml`](compose-wordpress/docker-compose.yaml): ejemplo independiente de WordPress + MySQL
 
 ## Requisitos
 
@@ -31,7 +35,9 @@ El flujo principal de este repositorio hoy es levantar la aplicacion con `docker
 Si quieres ejecutar la API fuera de contenedores:
 
 - Node.js 24
-- npm
+- pnpm 11
+
+El proyecto declara `packageManager: pnpm@11.1.2` y usa `only-allow pnpm`, por lo que las instalaciones locales deben hacerse con pnpm.
 
 ## Levantar la aplicacion con Docker Compose
 
@@ -59,7 +65,7 @@ La API queda expuesta en:
 
 ## Variables de entorno que hoy existen en `.env.app`
 
-El archivo [.env.app](/home/cmd/tmp/curso-contenedores/curso-contenedores/.env.app) define actualmente:
+El archivo [`.env.app`](.env.app) define actualmente:
 
 ```env
 POSTGRES_USER=postgres
@@ -89,12 +95,12 @@ En codigo, la aplicacion NestJS lee estas variables:
 - `DB_PASSWORD`: password de PostgreSQL. Por defecto `password`
 - `DB_NAME`: nombre de la base de datos. Por defecto `nestjs_db`
 
-Estas variables salen de [src/config/app.config.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/config/app.config.ts) y luego se usan en [src/main.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/main.ts) y [src/modules/users-data/database/database.module.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/modules/users-data/database/database.module.ts).
+Estas variables salen de [`src/config/app.config.ts`](src/config/app.config.ts) y luego se usan en [`src/main.ts`](src/main.ts) y [`src/modules/users-data/database/database.module.ts`](src/modules/users-data/database/database.module.ts).
 
 Importante:
 
 - `PORT` si existe en la aplicacion, pero hoy no esta definido en `.env.app`
-- `APP_VERSION` si existe en `docker-compose.yaml`, pero la aplicacion no lo usa en ningun archivo `src/`
+- `APP_VERSION` si existe en `docker-compose.yaml` y `kubernetes.yaml`, pero la aplicacion no lo usa en ningun archivo `src/`
 - `POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` no los lee NestJS directamente
 
 Cuando se usa Compose, esas variables que si consume la app quedan resueltas asi dentro del servicio `backend`:
@@ -113,13 +119,13 @@ Si `ENABLE_DB=false`, la aplicacion arranca sin cargar el modulo `users-data`.
 Instala dependencias:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Ejecuta en desarrollo:
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 Si quieres levantar la API local con base habilitada, por ejemplo:
@@ -131,16 +137,16 @@ DB_PORT=5432 \
 DB_USERNAME=postgres \
 DB_PASSWORD=postgres \
 DB_NAME=curso_contenedores \
-npm run start:dev
+pnpm run start:dev
 ```
 
 ## Comandos utiles
 
 ```bash
-npm run build
-npm run lint
-npm run test
-npm run test:cov
+pnpm run build
+pnpm run lint
+pnpm run test
+pnpm run test:cov
 ```
 
 La salida compilada queda en `dist/`.
@@ -204,8 +210,8 @@ El acceso a base de datos usa:
 
 La configuracion vive principalmente en:
 
-- [src/config/app.config.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/config/app.config.ts)
-- [src/modules/users-data/database/database.module.ts](/home/cmd/tmp/curso-contenedores/curso-contenedores/src/modules/users-data/database/database.module.ts)
+- [`src/config/app.config.ts`](src/config/app.config.ts)
+- [`src/modules/users-data/database/database.module.ts`](src/modules/users-data/database/database.module.ts)
 
 TypeORM esta configurado con:
 
@@ -213,6 +219,24 @@ TypeORM esta configurado con:
 - `synchronize: true`
 - `logging: ['error']`
 
-## Nota sobre la carpeta `docker-compose/`
+## Ejemplo WordPress
 
-En el repo existe ademas una carpeta [docker-compose](/home/cmd/tmp/curso-contenedores/curso-contenedores/docker-compose) con otros archivos de ejemplo. Ese contenido no corresponde al flujo principal actual de esta app NestJS. Para esta aplicacion, la referencia correcta es el archivo [docker-compose.yaml](/home/cmd/tmp/curso-contenedores/curso-contenedores/docker-compose.yaml) en la raiz.
+La carpeta [`compose-wordpress/`](compose-wordpress) contiene un ejemplo independiente de WordPress con MySQL.
+
+Ese ejemplo usa:
+
+- [`compose-wordpress/docker-compose.yaml`](compose-wordpress/docker-compose.yaml)
+- [`compose-wordpress/.env.wordpress`](compose-wordpress/.env.wordpress)
+- secretos en [`compose-wordpress/secrets/`](compose-wordpress/secrets)
+
+Para levantarlo:
+
+```bash
+docker compose --env-file compose-wordpress/.env.wordpress -f compose-wordpress/docker-compose.yaml up -d
+```
+
+WordPress queda expuesto en:
+
+- `http://localhost:8080`
+
+Este ejemplo no corresponde al flujo principal de la API NestJS.
